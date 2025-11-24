@@ -12,6 +12,7 @@ class DatabaseConnection {
     // CONFIGURE AQUI OS DADOS DO SEU BANCO
     this.#pool = mysql.createPool({
       host: 'localhost',
+      port: 3307,
       user: 'root',      // Seu usuário do MySQL
       password: '',      // Sua senha do MySQL
       database: 'sistema_tributario',
