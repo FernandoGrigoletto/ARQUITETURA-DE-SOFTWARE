@@ -1,39 +1,20 @@
-// models/grupodeContribuintes.js
-import DatabaseConnection from "./databaseConnection.js";
+import PessoaFisica from "./pessoaFisica.js";
+import PessoaJuridica from "./pessoaJuridica.js";
 
-class GrupoDeContribuintes extends DatabaseConnection {
-  static #instance;
-
+class GrupoDeContribuintes {
   constructor() {
-    super(); // Chama o construtor do DatabaseConnection
-    if (GrupoDeContribuintes.#instance) {
-      return GrupoDeContribuintes.#instance;
-    }
-    
-    // Inicializa a lista apenas se for a primeira vez
     this.contribuintes = [];
-    GrupoDeContribuintes.#instance = this;
-  }
-
-  // Método estático para obter a instância única (Singleton)
-  static getInstance() {
-    if (!this.#instance) {
-      this.#instance = new GrupoDeContribuintes();
-    }
-    return this.#instance;
   }
 
   addContribuinte(contribuinte) {
-    // Verificação simples baseada na existência do método getTipo
-    if (typeof contribuinte.getTipo === 'function') {
+    const tipo = contribuinte.getTipo();
+    if (tipo === "PessoaFisica" || tipo === "PessoaJuridica") {
       this.contribuintes.push(contribuinte);
     } else {
-      throw new Error("Objeto inválido. Deve ser um Contribuinte.");
+      throw new Error(
+        "O objeto deve ser uma instância de PessoaFisica ou PessoaJuridica"
+      );
     }
-  }
-
-  getContribuintes() {
-    return this.contribuintes;
   }
 
   getTotalImposto() {
@@ -47,10 +28,8 @@ class GrupoDeContribuintes extends DatabaseConnection {
     const totalPessoasFisicas = this.contribuintes.filter(
       (c) => c.getTipo() === "PessoaFisica"
     );
-    
-    // Verificação de segurança para o sexo
     const totalFeminino = totalPessoasFisicas.filter(
-      (c) => c.sexo && c.sexo.toLowerCase() === "feminino"
+      (c) => c.sexo.toLowerCase() === "feminino"
     ).length;
 
     return totalPessoasFisicas.length > 0
@@ -58,6 +37,7 @@ class GrupoDeContribuintes extends DatabaseConnection {
       : 0;
   }
 
+  // Método toString para representar o grupo de contribuintes como string
   toString() {
     return this.contribuintes.map((contrib) => contrib.toString()).join("\n");
   }

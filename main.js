@@ -1,6 +1,6 @@
-import PessoaFisica from "./pessoaFisica.js";
+import PessoaFisica from "./models/pessoaFisica.js";
 import PessoaJuridica from "./pessoaJuridica.js";
-import GrupoDeContribuintes from "./grupodeContribuintes.js";
+import GrupoDeContribuintes from "./models/grupodeContribuintes.js";
 import ImpostoController from "./controllers/impostoController.js";
 const grupo = new GrupoDeContribuintes();
 

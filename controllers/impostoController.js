@@ -2,14 +2,10 @@ import PessoaFisica from "../models/pessoaFisica.js";
 import PessoaJuridica from "../models/pessoaJuridica.js";
 import GrupoDeContribuintes from "../models/grupodeContribuintes.js";
 import TerminalView from "../views/terminalView.js";
-import PessoaFisica from "../models/pessoaFisica.js";
-import PessoaJuridica from "../models/pessoaJuridica.js";
-import GrupoDeContribuintes from "../models/grupodeContribuintes.js";
-import TerminalView from "../views/terminalView.js";
+// As linhas duplicadas foram removidas aqui
 
 class ImpostoController {
   constructor() {
-
     this.grupo = GrupoDeContribuintes.getInstance(); 
     this.view = new TerminalView();
   }
@@ -28,6 +24,7 @@ class ImpostoController {
 
   carregarDadosIniciais() {
     try {
+      // Certifique-se de que os caminhos dos imports dos modelos estão corretos
       const pf1 = new PessoaFisica("Pedro", "123.456.789-00", 2500, "Masculino");
       const pf2 = new PessoaFisica("Ana", "987.654.321-00", 3000, "Feminino");
       const pj1 = new PessoaJuridica(
