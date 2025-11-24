@@ -1,19 +1,30 @@
-import PessoaFisica from "./pessoaFisica.js";
-import PessoaJuridica from "./pessoaJuridica.js";
+// models/grupodeContribuintes.js
+import DatabaseConnection from "./databaseConnection.js";
 
-class GrupoDeContribuintes {
+class GrupoDeContribuintes extends DatabaseConnection {
+  static #instance;
+
   constructor() {
+    super();
+    if (GrupoDeContribuintes.#instance) {
+      return GrupoDeContribuintes.#instance;
+    }
     this.contribuintes = [];
+    GrupoDeContribuintes.#instance = this;
+  }
+
+  static getInstance() {
+    if (!this.#instance) {
+      this.#instance = new GrupoDeContribuintes();
+    }
+    return this.#instance;
   }
 
   addContribuinte(contribuinte) {
-    const tipo = contribuinte.getTipo();
-    if (tipo === "PessoaFisica" || tipo === "PessoaJuridica") {
+    if (contribuinte && typeof contribuinte.calcImposto === 'function') {
       this.contribuintes.push(contribuinte);
     } else {
-      throw new Error(
-        "O objeto deve ser uma instância de PessoaFisica ou PessoaJuridica"
-      );
+      // Opcional: Ignorar silenciosamente ou lançar erro
     }
   }
 
@@ -26,10 +37,10 @@ class GrupoDeContribuintes {
 
   getPorcentagemContribuintesFeminino() {
     const totalPessoasFisicas = this.contribuintes.filter(
-      (c) => c.getTipo() === "PessoaFisica"
+      (c) => c.constructor.name === "PessoaFisica"
     );
     const totalFeminino = totalPessoasFisicas.filter(
-      (c) => c.sexo.toLowerCase() === "feminino"
+      (c) => c.sexo && c.sexo.toLowerCase() === "feminino"
     ).length;
 
     return totalPessoasFisicas.length > 0
@@ -37,7 +48,6 @@ class GrupoDeContribuintes {
       : 0;
   }
 
-  // Método toString para representar o grupo de contribuintes como string
   toString() {
     return this.contribuintes.map((contrib) => contrib.toString()).join("\n");
   }
