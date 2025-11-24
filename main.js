@@ -1,7 +1,7 @@
 import PessoaFisica from "./pessoaFisica.js";
 import PessoaJuridica from "./pessoaJuridica.js";
 import GrupoDeContribuintes from "./grupodeContribuintes.js";
-
+import ImpostoController from "./controllers/impostoController.js";
 const grupo = new GrupoDeContribuintes();
 
 const pf1 = new PessoaFisica("Pedro", "123.456.789-00", 2500, "Masculino");
@@ -27,3 +27,6 @@ console.log(
 // Exibindo a representação em string dos contribuintes
 console.log("\nContribuintes no grupo:");
 console.log(grupo.toString());
+
+const app = new ImpostoController();
+app.iniciar();
