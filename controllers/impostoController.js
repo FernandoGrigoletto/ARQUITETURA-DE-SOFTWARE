@@ -10,50 +10,93 @@ class ImpostoController {
   }
 
   async iniciar() {
-    this.view.mostrarMensagem("A conectar ao banco de dados...");
-    
-    // 1. Inserir dados (se necessário) ou apenas carregar
-    await this.carregarDadosIniciais();
+    this.view.mostrarMensagem("A conectar ao banco...");
+    await this.grupo.carregarDoBanco(); // Carrega dados iniciais
 
-    // 2. Buscar todos os dados atualizados do banco
-    await this.grupo.carregarDoBanco();
+    let continuar = true;
 
-    // 3. Processar e Mostrar
-    const totalImposto = this.grupo.getTotalImposto();
-    const pctFeminino = this.grupo.getPorcentagemContribuintesFeminino();
-    const listaContribuintes = this.grupo.toString();
+    while (continuar) {
+      this.view.mostrarMenu();
+      const opcao = await this.view.perguntar("Escolha uma opção: ");
 
-    this.view.mostrarTotalImposto(totalImposto);
-    this.view.mostrarPorcentagemFeminino(pctFeminino);
-    this.view.mostrarListaContribuintes(listaContribuintes);
-    
-    // Encerrar processo (importante para fechar conexão com banco)
+      switch (opcao) {
+        case '1': // Listar
+          await this.listar();
+          break;
+        case '2': // Add PF
+          await this.adicionarPF();
+          break;
+        case '3': // Add PJ
+          await this.adicionarPJ();
+          break;
+        case '4': // Update
+          await this.atualizar();
+          break;
+        case '5': // Delete
+          await this.excluir();
+          break;
+        case '0':
+          continuar = false;
+          break;
+        default:
+          this.view.mostrarMensagem("Opção inválida!");
+      }
+    }
+
+    this.view.mostrarMensagem("A encerrar sistema...");
+    this.view.fechar();
     process.exit(0);
   }
 
-  async carregarDadosIniciais() {
-    try {
-      // Verifica se já tem dados para não duplicar a cada execução
-      const pool = this.grupo.dbConnection.getPool();
-      const [rows] = await pool.execute('SELECT count(*) as total FROM contribuintes');
-      
-      if (rows[0].total > 0) {
-        this.view.mostrarMensagem("Dados já existem no banco. Pulando inserção inicial.");
-        return;
-      }
+  async listar() {
+    await this.grupo.carregarDoBanco(); // Atualiza dados
+    const lista = this.grupo.toString();
+    const total = this.grupo.getTotalImposto();
+    const pct = this.grupo.getPorcentagemContribuintesFeminino();
+    
+    this.view.mostrarLista(lista || "Nenhum registo encontrado.");
+    this.view.mostrarRelatorio(total, pct);
+  }
 
-      this.view.mostrarMensagem("Inserindo dados iniciais...");
-      const pf1 = new PessoaFisica("Pedro", "123.456.789-00", 2500, "Masculino");
-      const pf2 = new PessoaFisica("Ana", "987.654.321-00", 3000, "Feminino");
-      const pj1 = new PessoaJuridica("Empresa Fictícia", "12.345.678/0001-99", 10000, 2005);
+  async adicionarPF() {
+    console.log("\n--- Nova Pessoa Física ---");
+    const nome = await this.view.perguntar("Nome: ");
+    const doc = await this.view.perguntar("CPF: ");
+    const renda = parseFloat(await this.view.perguntar("Renda Bruta: "));
+    const sexo = await this.view.perguntar("Sexo (Masculino/Feminino): ");
 
-      await this.grupo.addContribuinte(pf1);
-      await this.grupo.addContribuinte(pf2);
-      await this.grupo.addContribuinte(pj1);
-      
-    } catch (e) {
-      this.view.mostrarMensagem("Erro ao manipular dados: " + e.message);
-    }
+    const pf = new PessoaFisica(null, nome, doc, renda, sexo);
+    await this.grupo.addContribuinte(pf);
+    this.view.mostrarMensagem("Pessoa Física adicionada com sucesso!");
+  }
+
+  async adicionarPJ() {
+    console.log("\n--- Nova Pessoa Jurídica ---");
+    const nome = await this.view.perguntar("Nome da Empresa: ");
+    const doc = await this.view.perguntar("CNPJ: ");
+    const renda = parseFloat(await this.view.perguntar("Renda Bruta: "));
+    const ano = parseInt(await this.view.perguntar("Ano de Fundação: "));
+
+    const pj = new PessoaJuridica(null, nome, doc, renda, ano);
+    await this.grupo.addContribuinte(pj);
+    this.view.mostrarMensagem("Pessoa Jurídica adicionada com sucesso!");
+  }
+
+  async atualizar() {
+    await this.listar(); // Mostra IDs disponíveis
+    const id = await this.view.perguntar("\nDigite o ID para atualizar a renda: ");
+    const novaRenda = parseFloat(await this.view.perguntar("Nova Renda Bruta: "));
+    
+    await this.grupo.atualizarContribuinte(id, novaRenda);
+    this.view.mostrarMensagem("Renda atualizada!");
+  }
+
+  async excluir() {
+    await this.listar(); // Mostra IDs disponíveis
+    const id = await this.view.perguntar("\nDigite o ID para excluir: ");
+    
+    await this.grupo.removerContribuinte(id);
+    this.view.mostrarMensagem("Contribuinte removido!");
   }
 }
 

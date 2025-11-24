@@ -6,88 +6,77 @@ class GrupoDeContribuintes {
   static #instance;
 
   constructor() {
-    if (GrupoDeContribuintes.#instance) {
-      return GrupoDeContribuintes.#instance;
-    }
+    if (GrupoDeContribuintes.#instance) return GrupoDeContribuintes.#instance;
     this.dbConnection = DatabaseConnection.getInstance();
-    this.contribuintes = []; // Cache local dos objetos
+    this.contribuintes = [];
     GrupoDeContribuintes.#instance = this;
   }
 
   static getInstance() {
-    if (!this.#instance) {
-      this.#instance = new GrupoDeContribuintes();
-    }
+    if (!this.#instance) this.#instance = new GrupoDeContribuintes();
     return this.#instance;
   }
 
-  // AGORA É ASSÍNCRONO (ASYNC)
-  async addContribuinte(contribuinte) {
+  // CREATE (INSERIR)
+  async addContribuinte(c) {
     const pool = this.dbConnection.getPool();
-    const tipo = contribuinte.getTipo(); // 'PessoaFisica' ou 'PessoaJuridica'
-    
-    let sql = '';
-    let params = [];
+    const tipo = c.getTipo();
+    let sql = '', params = [];
 
-    // Prepara o INSERT dependendo do tipo
     if (tipo === 'PessoaFisica') {
       sql = `INSERT INTO contribuintes (nome, documento, renda_bruta, tipo, sexo) VALUES (?, ?, ?, ?, ?)`;
-      params = [contribuinte.getNome(), contribuinte.getDocumento(), contribuinte.getRendaBruta(), tipo, contribuinte.sexo];
+      params = [c.getNome(), c.getDocumento(), c.getRendaBruta(), tipo, c.sexo];
     } else {
       sql = `INSERT INTO contribuintes (nome, documento, renda_bruta, tipo, ano_fundacao) VALUES (?, ?, ?, ?, ?)`;
-      params = [contribuinte.getNome(), contribuinte.getDocumento(), contribuinte.getRendaBruta(), tipo, contribuinte.anoDeFundacao];
+      params = [c.getNome(), c.getDocumento(), c.getRendaBruta(), tipo, c.anoDeFundacao];
     }
-
-    // Executa no banco
     await pool.execute(sql, params);
-    
-    // Adiciona na lista local para cálculos imediatos
-    this.contribuintes.push(contribuinte);
   }
 
-  // NOVO MÉTODO: Carrega do banco e recria os Objetos
+  // READ (CARREGAR)
   async carregarDoBanco() {
     const pool = this.dbConnection.getPool();
     const [rows] = await pool.execute('SELECT * FROM contribuintes');
-    
-    this.contribuintes = []; // Limpa lista atual
-
+    this.contribuintes = [];
     rows.forEach(row => {
       let obj;
-      // Converte a linha do banco (JSON) para Objeto com Métodos
+      // Note que agora passamos row.id como primeiro parâmetro
       if (row.tipo === 'PessoaFisica') {
-        obj = new PessoaFisica(row.nome, row.documento, parseFloat(row.renda_bruta), row.sexo);
+        obj = new PessoaFisica(row.id, row.nome, row.documento, parseFloat(row.renda_bruta), row.sexo);
       } else {
-        obj = new PessoaJuridica(row.nome, row.documento, parseFloat(row.renda_bruta), row.ano_fundacao);
+        obj = new PessoaJuridica(row.id, row.nome, row.documento, parseFloat(row.renda_bruta), row.ano_fundacao);
       }
       this.contribuintes.push(obj);
     });
   }
 
-  getTotalImposto() {
-    // Calcula com base nos objetos carregados na memória
-    return this.contribuintes.reduce(
-      (total, contrib) => total + contrib.calcImposto(),
-      0
-    );
+  // UPDATE (ATUALIZAR)
+  async atualizarContribuinte(id, rendaNova) {
+    const pool = this.dbConnection.getPool();
+    // Exemplo simples: Atualizar apenas a renda bruta
+    const sql = `UPDATE contribuintes SET renda_bruta = ? WHERE id = ?`;
+    await pool.execute(sql, [rendaNova, id]);
+  }
+
+  // DELETE (EXCLUIR)
+  async removerContribuinte(id) {
+    const pool = this.dbConnection.getPool();
+    const sql = `DELETE FROM contribuintes WHERE id = ?`;
+    await pool.execute(sql, [id]);
   }
 
   getPorcentagemContribuintesFeminino() {
-    const totalPessoasFisicas = this.contribuintes.filter(
-      (c) => c.constructor.name === "PessoaFisica"
-    );
-    
-    const totalFeminino = totalPessoasFisicas.filter(
-      (c) => c.sexo && c.sexo.toLowerCase() === "feminino"
-    ).length;
+    const fisicas = this.contribuintes.filter(c => c.constructor.name === "PessoaFisica");
+    const fem = fisicas.filter(c => c.sexo && c.sexo.toLowerCase() === "feminino").length;
+    return fisicas.length > 0 ? (fem / fisicas.length) * 100 : 0;
+  }
 
-    return totalPessoasFisicas.length > 0
-      ? (totalFeminino / totalPessoasFisicas.length) * 100
-      : 0;
+  getTotalImposto() {
+    return this.contribuintes.reduce((acc, c) => acc + c.calcImposto(), 0);
   }
 
   toString() {
-    return this.contribuintes.map((contrib) => contrib.toString()).join("\n");
+    return this.contribuintes.map(c => c.toString()).join("\n");
   }
 }
 

@@ -1,36 +1,30 @@
 class Contribuinte {
+  #id; // Novo campo
   #nome;
   #documento;
   #rendaBruta;
 
-  constructor(nome, documento, rendaBruta) {
+  constructor(id, nome, documento, rendaBruta) {
+    this.#id = id;
     this.#nome = nome;
     this.#documento = documento;
     this.#rendaBruta = rendaBruta;
   }
 
-  getNome() {
-    return this.#nome;
-  }
+  getId() { return this.#id; }
+  getNome() { return this.#nome; }
+  getDocumento() { return this.#documento; }
+  getRendaBruta() { return this.#rendaBruta; }
 
-  getDocumento() {
-    return this.#documento;
-  }
+  // Setters para atualização
+  setNome(valor) { this.#nome = valor; }
+  setRendaBruta(valor) { this.#rendaBruta = valor; }
 
-  getRendaBruta() {
-    return this.#rendaBruta;
-  }
-
-  calcImposto() {
-    return 0;
-  }
-
-  getTipo() {
-    return this.constructor.name;
-  }
+  calcImposto() { return 0; }
+  getTipo() { return this.constructor.name; }
 
   toString() {
-    return `Contribuinte: ${this.#nome}, Documento: ${this.#documento}, Renda Bruta: R$ ${this.#rendaBruta}`;
+    return `[ID: ${this.#id}] ${this.#nome} | Doc: ${this.#documento} | Renda: R$ ${this.#rendaBruta}`;
   }
 }
 
